@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (function() {
+        try {
+          var _origFetch = window.fetch;
+          var _currentFetch = _origFetch;
+          var desc = {
+            configurable: true,
+            enumerable: true,
+            get: function() {
+              return _currentFetch;
+            },
+            set: function(fn) {
+              _currentFetch = fn;
+            }
+          };
+          try {
+            Object.defineProperty(window, 'fetch', desc);
+          } catch (e) {}
+          if (typeof Window !== 'undefined' && Window.prototype) {
+            try {
+              Object.defineProperty(Window.prototype, 'fetch', desc);
+            } catch (e) {}
+          }
+        } catch (e) {}
+      })();
+    </script>
+    <title>RankPilot - AI SEO, Keyword Research & Creator Platform</title>
+    <meta name="description" content="Research keywords, discover content opportunities, and create optimized articles with powerful free SEO and AI creator tools." />
+    <meta property="og:title" content="RankPilot - AI SEO, Keyword Research & Creator Platform" />
+    <meta property="og:description" content="Research keywords, discover content opportunities, and create optimized articles with powerful free SEO and AI creator tools." />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="RankPilot" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="RankPilot - AI SEO, Keyword Research & Creator Platform" />
+    <meta name="twitter:description" content="Research keywords, discover content opportunities, and create optimized articles with powerful free SEO and AI creator tools." />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

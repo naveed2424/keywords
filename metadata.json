@@ -1,0 +1,6 @@
+{
+  "name": "RankPilot - AI SEO, Keyword Research & Creator Platform",
+  "description": "Production-ready SEO intelligence, keyword research, AI content writing, and creator tools platform.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
