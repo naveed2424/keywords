@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Network, Sparkles, Layers, Link2, ArrowRight, Loader2, Copy } from 'lucide-react';
 import { SEOHead } from '../components/common/SEOHead';
 import { apiService } from '../services/apiService';
@@ -6,7 +6,10 @@ import { IntentBadge } from '../components/common/Badges';
 import { KeywordCluster } from '../types/seo';
 
 export const KeywordClusteringPage: React.FC = () => {
-  const [seed, setSeed] = useState('indoor plants, succulent care, fiddle leaf fig lighting, grow light schedule');
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialSeed = searchParams.get('q') || 'indoor plants, succulent care, fiddle leaf fig lighting';
+
+  const [seed, setSeed] = useState(initialSeed);
   const [loading, setLoading] = useState(false);
   const [clusters, setClusters] = useState<KeywordCluster[]>([
     {
@@ -51,6 +54,12 @@ export const KeywordClusteringPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialSeed) {
+      handleCluster();
+    }
+  }, []);
 
   return (
     <div className="bg-[#fafbfc] min-h-screen pb-24">

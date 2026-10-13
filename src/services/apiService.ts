@@ -1,4 +1,11 @@
 import { KeywordResearchSummary, ArticleDraft, ContentOptimizationReport } from '../types/seo';
+import {
+  generateDynamicSeoResearch,
+  estimateDomainTraffic,
+  DomainTrafficReport,
+  analyzeContentGaps,
+  ContentGapItem,
+} from './seoEngine';
 
 const API_BASE = '/api';
 
@@ -28,8 +35,8 @@ export const apiService = {
       const data = await res.json();
       return data;
     } catch (err) {
-      console.warn('API call failed, falling back to local heuristic response:', err);
-      return getClientFallbackKeywordData(cleanKeyword, country, language);
+      console.warn('API call failed or offline, returning dynamic calculated SEO data:', err);
+      return generateDynamicSeoResearch(cleanKeyword, country, language);
     }
   },
 
@@ -169,6 +176,44 @@ export const apiService = {
     } catch (err) {
       return `For **${message}**, prioritize low-difficulty keywords (KD < 30), structure your page with clean H2/H3 subheadings, and link to related topical cluster articles to prove domain authority.`;
     }
+  },
+
+  /**
+   * Traffic Estimator: Real domain organic visits and ranking pages
+   */
+  async estimateTraffic(domain: string): Promise<DomainTrafficReport> {
+    const cleanDomain = (domain || '').trim();
+    try {
+      const res = await fetch(`${API_BASE}/ai/traffic-estimate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ domain: cleanDomain }),
+      });
+      if (!res.ok) throw new Error(`Traffic API error: ${res.status}`);
+      return await res.json();
+    } catch (err) {
+      console.warn('Traffic API fallback to dynamic calculated engine:', err);
+      return estimateDomainTraffic(cleanDomain);
+    }
+  },
+
+  /**
+   * Content Gap: Real competitive keyword opportunities
+   */
+  async analyzeContentGap(yourDomain: string, competitors: string[]): Promise<ContentGapItem[]> {
+    try {
+      const res = await fetch(`${API_BASE}/ai/content-gap`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ yourDomain, competitors }),
+      });
+      if (!res.ok) throw new Error(`Content Gap API error: ${res.status}`);
+      const data = await res.json();
+      return data.gaps || [];
+    } catch (err) {
+      console.warn('Content Gap fallback to dynamic calculated engine:', err);
+      return analyzeContentGaps(yourDomain, competitors);
+    }
   }
 };
 
@@ -176,113 +221,9 @@ export const apiService = {
 // Client Fallback Helpers for 100% resilient offline/demo operations
 // ---------------------------------------------------------------------
 function getClientFallbackKeywordData(seed: string, country: string, language: string): KeywordResearchSummary {
-  const clean = seed.toLowerCase().trim();
-  const variations = [
-    { suffix: ' for beginners', intent: 'informational' as const, diff: 22, vol: 5400, cpc: 1.80 },
-    { suffix: ' strategy 2026', intent: 'informational' as const, diff: 38, vol: 8200, cpc: 2.90 },
-    { suffix: ' checklist pdf', intent: 'transactional' as const, diff: 19, vol: 3100, cpc: 1.20 },
-    { suffix: ' software tools', intent: 'commercial' as const, diff: 44, vol: 6900, cpc: 4.10 },
-    { suffix: ' vs alternatives', intent: 'commercial' as const, diff: 31, vol: 2400, cpc: 2.30 },
-    { suffix: ' cost and pricing', intent: 'commercial' as const, diff: 35, vol: 4100, cpc: 3.50 },
-    { suffix: ' best practices', intent: 'informational' as const, diff: 26, vol: 4800, cpc: 2.10 },
-    { suffix: ' case study examples', intent: 'informational' as const, diff: 18, vol: 1900, cpc: 1.50 },
-    { suffix: ' course online', intent: 'transactional' as const, diff: 49, vol: 7200, cpc: 5.20 },
-    { suffix: ' tips for creators', intent: 'informational' as const, diff: 21, vol: 2800, cpc: 1.60 },
-  ];
-
-  const keywords = variations.map((v, i) => {
-    const kw = `${clean}${v.suffix}`;
-    return {
-      id: `fallback-kw-${i}`,
-      keyword: kw,
-      volume: v.vol,
-      difficulty: v.diff,
-      difficultyLabel: v.diff < 25 ? ('Very Easy' as const) : v.diff < 35 ? ('Easy' as const) : ('Medium' as const),
-      cpc: v.cpc,
-      competition: v.diff > 40 ? ('High' as const) : v.diff > 25 ? ('Medium' as const) : ('Low' as const),
-      intent: v.intent,
-      trend: [65, 70, 75, 80, 85, 90, 88, 92, 95, 96, 98, 100],
-      trendChange: 15,
-      trafficPotential: Math.round(v.vol * 0.4),
-      opportunityScore: Math.max(20, 100 - v.diff + Math.round(v.vol / 500)),
-      serpFeatures: ['Featured Snippet', 'People Also Ask'],
-      isLongTail: true,
-      wordCount: kw.split(' ').length,
-      sourceType: 'AI Estimate' as const,
-    };
-  });
-
-  return {
-    seed: clean,
-    country,
-    language,
-    overview: {
-      volume: 12500,
-      difficulty: 32,
-      difficultyLabel: 'Easy',
-      cpc: 2.15,
-      competition: 'Medium',
-      intent: 'informational',
-      trend: [60, 64, 70, 76, 80, 85, 88, 92, 94, 95, 98, 100],
-      trafficPotential: 8400,
-      opportunityScore: 82,
-      opportunityRationale: 'Strong search interest with notable gaps in competitor depth. High ranking potential.',
-      sourceType: 'AI Estimate',
-    },
-    keywords,
-    questions: [
-      { id: 'q-1', type: 'how', question: `How to implement ${clean} step by step?`, volume: 3800, difficulty: 24, intent: 'informational' },
-      { id: 'q-2', type: 'what', question: `What is the best way to master ${clean}?`, volume: 4600, difficulty: 28, intent: 'informational' },
-      { id: 'q-3', type: 'which', question: `Which ${clean} tools offer the highest ROI?`, volume: 2200, difficulty: 36, intent: 'commercial' },
-      { id: 'q-4', type: 'why', question: `Why does ${clean} matter for creators in 2026?`, volume: 2900, difficulty: 19, intent: 'informational' },
-    ],
-    clusters: [
-      {
-        id: 'cl-1',
-        pillarTopic: `${clean.toUpperCase()} Core Guide`,
-        supportingCluster: 'Foundations & Implementation',
-        suggestedUrl: `/guides/${clean.replace(/\s+/g, '-')}`,
-        recommendedArticleTitle: `The Complete Guide to ${clean}: Step-by-Step`,
-        primaryIntent: 'informational',
-        keywords: [clean, `${clean} for beginners`, `how to start ${clean}`],
-        internalLinkingTips: ['Link to tool comparisons', 'Include downloadable checklist'],
-      }
-    ],
-    contentIdeas: [
-      {
-        id: 'id-1',
-        title: `${clean}: 7 Practical Tactics Proven to Drive Results`,
-        category: 'How-To',
-        targetKeyword: clean,
-        difficultyEstimate: 'Easy',
-        estimatedCTR: 'High',
-        suggestedAngle: 'Step-by-step case study with templates',
-        monetizationAngle: 'Affiliate links to recommended tools',
-      }
-    ],
-    serpAnalysis: {
-      keyword: clean,
-      featuresPresent: ['Featured Snippet', 'People Also Ask', 'Discussions and Forums'],
-      topResults: [
-        {
-          position: 1,
-          title: `Comprehensive Guide to ${clean}`,
-          url: `https://example.com/${clean.replace(/\s+/g, '-')}`,
-          domain: 'example.com',
-          snippet: `Authoritative guide covering everything you need to know about ${clean}.`,
-          estimatedTraffic: 9400,
-          domainAuthority: 64,
-          wordCount: 2800,
-          weaknessFlag: 'Outdated statistics from previous year',
-        }
-      ],
-      serpWeaknesses: ['Top results lack fresh 2026 benchmarks', 'Forums ranking on page 1'],
-      rankingOpportunities: ['Create an interactive checklist', 'Include comprehensive FAQ section'],
-      recommendedContentLength: 2400,
-      sourceType: 'AI Estimate',
-    }
-  };
+  return generateDynamicSeoResearch(seed, country, language);
 }
+
 
 function getClientFallbackArticle(params: any): ArticleDraft {
   const topic = params.topic || params.primaryKeyword || 'SEO Strategy';

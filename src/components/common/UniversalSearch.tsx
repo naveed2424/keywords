@@ -70,7 +70,7 @@ export const UniversalSearch: React.FC<UniversalSearchProps> = ({
     if (type === 'question') {
       window.location.href = `/questions?q=${encodeURIComponent(clean)}`;
     } else if (type === 'domain' || type === 'url') {
-      window.location.href = `/serp-analyzer?q=${encodeURIComponent(clean)}`;
+      window.location.href = `/traffic-estimator?domain=${encodeURIComponent(clean)}`;
     } else {
       window.location.href = `/keyword-explorer?q=${encodeURIComponent(clean)}`;
     }

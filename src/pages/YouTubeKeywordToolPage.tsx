@@ -1,10 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Video, Search, Sparkles, Copy, Check, ArrowRight, Loader2, Tag, PlayCircle } from 'lucide-react';
 import { SEOHead } from '../components/common/SEOHead';
 import { apiService } from '../services/apiService';
 
 export const YouTubeKeywordToolPage: React.FC = () => {
-  const [keyword, setKeyword] = useState('how to start a podcast');
+  const searchParams = new URLSearchParams(window.location.search);
+  const initialQ = searchParams.get('q') || 'how to start a podcast';
+
+  const [keyword, setKeyword] = useState(initialQ);
   const [loading, setLoading] = useState(false);
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
@@ -54,6 +57,12 @@ export const YouTubeKeywordToolPage: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialQ) {
+      handleSearch();
+    }
+  }, []);
 
   const copyTags = () => {
     navigator.clipboard.writeText(data.tags.join(', '));
